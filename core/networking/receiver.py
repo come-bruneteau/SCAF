@@ -1,69 +1,86 @@
+"""SCAF DCS UDP receiver: parse, validate, record, dispatch."""
 
-import json
-import socket
+import argparse
 from datetime import datetime, timezone
+import json
+from pathlib import Path
+import socket
+
+from core.models.aircraft_state import AircraftState, TelemetryValidationError
+from core.models.session import FlightSession
+from core.networking.dispatcher import Dispatcher
 
 HOST = "127.0.0.1"
 PORT = 50500
 
-def format_value(value, digits=2):
-    if value is None:
-        return "N/A"
-    return f"{value:.{digits}f}"
+def format_value(value: float | None, digits: int = 2) -> str:
+    return "N/A" if value is None else f"{value:.{digits}f}"
 
-
-def main():
-    server = socket.socket(
-        socket.AF_INET,
-        socket.SOCK_DGRAM
+def log_state(state: AircraftState) -> None:
+    print(
+        f"#{state.sequence} {state.aircraft_type} | "
+        f"IAS: {format_value(state.indicated_airspeed_kmh)} km/h | "
+        f"Altitude: {format_value(state.altitude_asl_m)} m | "
+        f"Fuel: {format_value(state.fuel_internal_kg)} kg | "
+        f"Normal G (Y): {format_value(state.normal_g)}"
     )
-    server.bind((HOST, PORT))
 
-    print(f"[SCAF] Listening on {HOST}:{PORT}")
+def main() -> None:
+    parser = argparse.ArgumentParser(description="SCAF DCS telemetry receiver")
+    parser.add_argument("--sessions-dir", type=Path, default=Path("data/sessions"))
+    parser.add_argument("--host", default=HOST)
+    parser.add_argument("--port", type=int, default=PORT)
+    args = parser.parse_args()
 
-    try:
-        while True:
-            raw, address = server.recvfrom(65535)
+    dispatcher = Dispatcher()
+    dispatcher.subscribe("aircraft.state", log_state)
+    session: FlightSession | None = None
 
-            try:
-                packet = json.loads(raw.decode("utf-8"))
-            except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-                print(f"[SCAF] Invalid packet: {exc}")
-                continue
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as server:
+        server.bind((args.host, args.port))
+        server.settimeout(0.5)
+        print(f"[SCAF] Listening on {args.host}:{args.port}")
 
-            if (
-                not isinstance(packet, dict)
-                or packet.get("protocol") != "scaf.telemetry"
-                or packet.get("version") != 1
-                or packet.get("type") != "aircraft.state"
-            ):
-                print("[SCAF] Unsupported packet")
-                continue
+        try:
+            while True:
+                try:
+                    raw, address = server.recvfrom(65535)
+                except socket.timeout:
+                    continue
 
-            data = packet.get("data", {})
-            aircraft = packet.get("aircraft", {})
-            acceleration = data.get("acceleration_g") or {}
-
-            speed = data.get("speed_mps")
-            speed_kmh = speed * 3.6 if speed is not None else None
-
-            print(
-                f"[{datetime.now(timezone.utc).isoformat()}] "
-                f"#{packet.get('sequence')} "
-                f"{aircraft.get('type', 'Unknown')} | "
-                f"Speed: {format_value(speed_kmh)} km/h | "
-                f"Altitude: {format_value(data.get('altitude_m'))} m | "
-                f"Fuel: {format_value(data.get('fuel_internal_kg'))} kg | "
-                f"Normal G: {format_value(acceleration.get("y"))} g | "
-                f"Accel Z: {format_value(acceleration.get('z'))} g"
+                received_at = datetime.now(timezone.utc).isoformat()
                 
-            )
+                try:
+                    packet = json.loads(raw.decode("utf-8"), parse_constant=lambda c: (_ for _ in ()).throw(ValueError(f"Invalid JSON constant: {c}")))
+                    state = AircraftState.from_packet(packet)
+                except (UnicodeDecodeError, ValueError, TelemetryValidationError) as exc:
+                    print(f"[SCAF] Discarded invalid packet: {exc}")
+                    continue
 
-    except KeyboardInterrupt:
-        print("\n[SCAF] Receiver stopped")
+                reset = session is not None and (
+                    state.aircraft_type != session.aircraft_type
+                    or (session.last_model_time_s is not None and state.model_time_s < session.last_model_time_s)
+                    or (session.last_sequence is not None and state.sequence < session.last_sequence)
+                )
 
-    finally:
-        server.close()
+                if reset:
+                    session.close()
+                    session = None
+
+                if session is None:
+                    session = FlightSession.start(args.sessions_dir, state.aircraft_type)
+                    print(f"[SCAF] Session started: {session.session_id}")
+
+                if not session.append(packet, state, received_at):
+                    continue
+
+                dispatcher.publish("aircraft.state", state)
+        except KeyboardInterrupt:
+            print("\n[SCAF] Receiver stopped")
+        finally:
+            if session is not None:
+                session.close()
+                print(f"[SCAF] Session saved: {session.directory}")
 
 
 if __name__ == "__main__":
