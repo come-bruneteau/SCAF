@@ -21,6 +21,7 @@ class HudWindow(QWidget):
         super().__init__()
         self.capture = capture
         self.packet = {}
+        self.live_mode = False
         self.setWindowTitle("SCAF HUD — Window Capture")
         self.resize(width, height)
         self.setMinimumSize(640, 360)
@@ -56,7 +57,7 @@ class HudWindow(QWidget):
                       else fuel_inside)
         self._text(painter, 38, 38, "SCAF  /  HUD DE VOL", 16, DIM)
         self._text(painter, 38, 64, str(aircraft.get("type", "AUCUN AVION")), 14, DIM)
-        self._text(painter, 725, 38, "RELECTURE  •  EXPÉRIMENTAL", 12, DIM)
+        self._text(painter, 725, 38, "DIRECT  •  EXPÉRIMENTAL" if self.live_mode else "RELECTURE  •  EXPÉRIMENTAL", 12, DIM)
         self._metric(painter, 55, 135, "VITESSE INDIQUÉE", display_number(data.get("speed_mps"), scale=3.6), "km/h")
         self._metric(painter, 700, 135, "ALTITUDE (NIVEAU MER)", display_number(data.get("altitude_m")), "m")
         self._metric(painter, 55, 425, "MASSE CARBURANT", display_number(fuel_total, digits=1), "kg")
@@ -74,7 +75,7 @@ class HudWindow(QWidget):
         for yy in (203, 237, 303, 337):
             painter.drawLine(325, yy, 390, yy)
             painter.drawLine(570, yy, 635, yy)
-        self._text(painter, 480, 385, "DÉMO : AFFICHAGE FIXÉ AU CASQUE", 12, DIM, centered=True)
+        self._text(painter, 480, 385, "EN ATTENTE DE TÉLÉMÉTRIE" if self.live_mode and not self.packet else "DÉMO : AFFICHAGE FIXÉ AU CASQUE", 12, DIM, centered=True)
         self._text(painter, 480, 510, "AUCUN REPÈRE ANCRÉ DANS LE MONDE POUR CETTE VERSION", 11, DIM, centered=True)
         painter.end()
 
