@@ -44,4 +44,4 @@ Outputs (under `SESSION/report/` by default):
 - The computed ground distance is an estimate based on valid, plausible adjacent coordinates, not a certified flown distance.
 - No flight safety score, stall threshold, or aircraft-dependent limits are invented.
 - Incomplete sessions are explicitly marked as incomplete. Malformed JSONL lines are skipped and counted.
-- The `data/` folder should remain excluded from Git unless a sanitized sample is intentionally committed.
+- The `data/sessions` folder should remain excluded from Git.
