@@ -35,9 +35,10 @@ def _mapping(value: Any, name: str) -> dict[str, Any]:
     return value
 
 
-def _fields(mapping: dict[str, Any], required: set[str], name: str) -> None:
+def _fields(mapping: dict[str, Any], required: set[str], name: str,
+            optional: set[str] | None = None) -> None:
     missing = required - mapping.keys()
-    unknown = mapping.keys() - required
+    unknown = mapping.keys() - required - (optional or set())
     
     if missing or unknown:
         raise TelemetryValidationError(
@@ -102,7 +103,13 @@ class AircraftState:
             raise TelemetryValidationError("aircraft.type: expected nonempty string")
         
         data = _mapping(packet["data"], "data")
-        _fields(data, {"speed_mps", "altitude_m", "fuel_internal_kg", "fuel_external_kg", "acceleration_g", "position"}, "data")
+        _fields(data, {"speed_mps", "altitude_m", "fuel_internal_kg", "fuel_external_kg", "acceleration_g", "position"}, "data", {"attitude"})
+        attitude = data.get("attitude")
+        if attitude is not None:
+            attitude = _mapping(attitude, "attitude")
+            _fields(attitude, {"pitch_rad", "bank_rad"}, "attitude")
+            _number(attitude["pitch_rad"], "attitude.pitch_rad")
+            _number(attitude["bank_rad"], "attitude.bank_rad")
         accel = _mapping(data["acceleration_g"], "acceleration_g")
         pos = _mapping(data["position"], "position")
         _fields(accel, {"x", "y", "z"}, "acceleration_g")

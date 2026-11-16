@@ -88,6 +88,7 @@ local function read_telemetry(time)
     local engine = LoGetEngineInfo()
     local acceleration = LoGetAccelerationUnits()
     local location = self_data.LatLongAlt or {}
+    local pitch, bank = self_data.Pitch, self_data.Bank
 
     sequence = sequence + 1
 
@@ -110,7 +111,8 @@ local function read_telemetry(time)
                 '"lat_deg":%s,' ..
                 '"lon_deg":%s,' ..
                 '"alt_m":%s' ..
-            '}' ..
+            '},' ..
+            '"attitude":{"pitch_rad":%s,"bank_rad":%s}' ..
         '}}',
         sequence,
         json_number(time),
@@ -124,7 +126,9 @@ local function read_telemetry(time)
         json_number(acceleration and acceleration.z),
         json_number(location.Lat),
         json_number(location.Long),
-        json_number(location.Alt)
+        json_number(location.Alt),
+        json_number(pitch),
+        json_number(bank)
     )
 end
 

@@ -4,41 +4,167 @@
   "title": "SCAF DCS aircraft state v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["protocol", "version", "type", "sequence", "timestamp", "aircraft", "data"],
+  "required": [
+    "protocol",
+    "version",
+    "type",
+    "sequence",
+    "timestamp",
+    "aircraft",
+    "data"
+  ],
   "properties": {
-    "protocol": { "const": "scaf.telemetry" },
-    "version": { "const": 1 },
-    "type": { "const": "aircraft.state" },
-    "sequence": { "type": "integer", "minimum": 1 },
-    "timestamp": { "type": "number", "minimum": 0 },
+    "protocol": {
+      "const": "scaf.telemetry"
+    },
+    "version": {
+      "const": 1
+    },
+    "type": {
+      "const": "aircraft.state"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "timestamp": {
+      "type": "number",
+      "minimum": 0
+    },
     "aircraft": {
-      "type": "object", "required": ["type"], "additionalProperties": false,
-      "properties": { "type": { "type": "string", "minLength": 1 } }
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
     },
     "data": {
-      "type": "object", "additionalProperties": false,
-      "required": ["speed_mps", "altitude_m", "fuel_internal_kg", "fuel_external_kg", "acceleration_g", "position"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "speed_mps",
+        "altitude_m",
+        "fuel_internal_kg",
+        "fuel_external_kg",
+        "acceleration_g",
+        "position"
+      ],
       "properties": {
-        "speed_mps": { "type": ["number", "null"], "minimum": 0 },
-        "altitude_m": { "type": ["number", "null"] },
-        "fuel_internal_kg": { "type": ["number", "null"], "minimum": 0 },
-        "fuel_external_kg": { "type": ["number", "null"], "minimum": 0 },
+        "speed_mps": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "altitude_m": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "fuel_internal_kg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "fuel_external_kg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
         "acceleration_g": {
-          "type": "object", "additionalProperties": false,
-          "required": ["x", "y", "z"],
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "x",
+            "y",
+            "z"
+          ],
           "properties": {
-            "x": { "type": ["number", "null"] },
-            "y": { "type": ["number", "null"] },
-            "z": { "type": ["number", "null"] }
+            "x": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "y": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "z": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
           }
         },
         "position": {
-          "type": "object", "additionalProperties": false,
-          "required": ["lat_deg", "lon_deg", "alt_m"],
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "lat_deg",
+            "lon_deg",
+            "alt_m"
+          ],
           "properties": {
-            "lat_deg": { "type": ["number", "null"], "minimum": -90, "maximum": 90 },
-            "lon_deg": { "type": ["number", "null"], "minimum": -180, "maximum": 180 },
-            "alt_m": { "type": ["number", "null"] }
+            "lat_deg": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": -90,
+              "maximum": 90
+            },
+            "lon_deg": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": -180,
+              "maximum": 180
+            },
+            "alt_m": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          }
+        },
+        "attitude": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "pitch_rad",
+            "bank_rad"
+          ],
+          "properties": {
+            "pitch_rad": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "bank_rad": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
           }
         }
       }

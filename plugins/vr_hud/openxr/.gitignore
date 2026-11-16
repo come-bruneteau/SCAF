@@ -1,0 +1,6 @@
+vendor/
+dist/
+__pycache__/
+*.pyc
+*.bak
+*.vr004.bak
