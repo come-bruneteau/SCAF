@@ -1,5 +1,5 @@
-// SCAF VR-005.1: compact transparent head-locked OpenXR HUD with smoothed attitude.
-// Adapted to the VR-003 OpenXR-Layer-Template integration, Windows x64 / D3D11.
+// SCAF: compact transparent head-locked OpenXR HUD with smoothed attitude.
+// Adapted to the OpenXR-Layer-Template integration, Windows x64 / D3D11.
 // No network call is allowed to block the DCS OpenXR frame thread.
 #pragma once
 
